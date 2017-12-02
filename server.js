@@ -32,3 +32,24 @@ app.use(cors());
 app.get('*', (req, res) => res.redirect(CLIENT_URL));
 
 app.listen(PORT, () => console.log(`Server started on port ${PORT}!`));
+
+// Database
+loadUsersDB();
+
+function loadUsersDB() {
+  console.log('users DB');
+  client.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id SERIAL,
+      username VARCHAR(12) UNIQUE NOT NULL,
+      password VARCHAR(16) NOT NULL,
+      email VARCHAR(255) UNIQUE NOT NULL,
+      avatar VARCHAR(255),
+      name VARCHAR(255),
+      birthdate VARCHAR(40),
+      description TEXT
+    );`
+  )
+    .then()
+    .catch(err => console.error(err))
+}
