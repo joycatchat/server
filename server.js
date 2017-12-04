@@ -27,6 +27,28 @@ client.on('error', err => console.error(err));
 app.use(cors());
 
 // API Endpoints
+app.get('/login', (req, res) => {
+  client.query(`
+    SELECT * FROM users WHERE username='${req.query.username}'`)
+    .then(result => {
+      if (result.rows[0].password === req.query.password) res.send(result.rows[0]);
+      else res.send('passworderror');
+    })
+    .catch(err => {
+      console.error(err);
+      res.send('usererror');
+    });
+});
+
+app.post('/register', (req, res) => {
+  console.log(req.body);
+  client.query(`
+    INSERT INTO users (username, password)
+    VALUES ('${req.body.username}', '${req.body.password}')
+    `)
+    .then(() => res.send('registered'))
+    .catch(err => console.error(err));
+});
 
 // API Final Endpoints
 app.get('*', (req, res) => res.redirect(CLIENT_URL));
@@ -43,7 +65,6 @@ function loadUsersDB() {
       id SERIAL,
       username VARCHAR(12) UNIQUE NOT NULL,
       password VARCHAR(16) NOT NULL,
-      email VARCHAR(255) UNIQUE NOT NULL,
       avatar VARCHAR(255),
       name VARCHAR(255),
       birthdate VARCHAR(40),
