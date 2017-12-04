@@ -27,9 +27,12 @@ client.on('error', err => console.error(err));
 app.use(cors());
 
 // API Endpoints
+
+// Login
 app.get('/login', (req, res) => {
+  console.log('login: ', req.query);
   client.query(`
-    SELECT * FROM users WHERE username='${req.query.username}'`)
+    SELECT * FROM users WHERE username='${req.query.username}';`)
     .then(result => {
       if (result.rows[0].password === req.query.password) res.send(result.rows[0]);
       else res.send('passworderror');
@@ -40,14 +43,27 @@ app.get('/login', (req, res) => {
     });
 });
 
+// Register
 app.post('/register', bodyParser, (req, res) => {
-  console.log(req.body);
+  console.log('register: ', req.body);
   client.query(`
     INSERT INTO users (username, password)
-    VALUES ('${req.body.username}', '${req.body.password}')
+    VALUES ('${req.body.username}', '${req.body.password}');
     `)
     .then(() => res.send('registered'))
     .catch(() => res.send('userexists'));
+});
+
+// Update Profile
+app.put('/updateprofile', bodyParser, (req, res) =>{
+  console.log('profile: ', req.body);
+  client.query(`
+    UPDATE users
+    SET name='${req.body.username}', birthdate='${req.body.username}', description='${req.body.username}', avatar='${req.body.username}'
+    WHERE username='${req.body.username}'
+    `)
+    .then(res.send('profile edited'))
+    .catch(err => console.error(err));
 });
 
 // API Final Endpoints
