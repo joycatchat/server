@@ -40,14 +40,14 @@ app.get('/login', (req, res) => {
     });
 });
 
-app.post('/register', (req, res) => {
+app.post('/register', bodyParser, (req, res) => {
   console.log(req.body);
   client.query(`
     INSERT INTO users (username, password)
     VALUES ('${req.body.username}', '${req.body.password}')
     `)
     .then(() => res.send('registered'))
-    .catch(err => console.error(err));
+    .catch(() => res.send('userexists'));
 });
 
 // API Final Endpoints
