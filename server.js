@@ -32,7 +32,7 @@ app.use(cors());
 app.get('/login', (req, res) => {
   console.log('login: ', req.query);
   client.query(`
-    SELECT * FROM users WHERE username='${req.query.username}';`)
+    SELECT username, password FROM users WHERE username='${req.query.username}';`)
     .then(result => {
       if (result.rows[0].password === req.query.password) res.send(result.rows[0]);
       else res.send('passworderror');
@@ -54,13 +54,24 @@ app.post('/register', bodyParser, (req, res) => {
     .catch(() => res.send('userexists'));
 });
 
+// Load Profile
+app.get('/loadprofile', (req, res) => {
+  console.log('load profile: ', req.query);
+  client.query(`
+    SELECT * FROM users WHERE username='${req.query.username}';`)
+    .then(result => res.send(result.rows[0]))
+    .catch(err => console.error(err));
+});
+
 // Update Profile
 app.put('/updateprofile', bodyParser, (req, res) =>{
   console.log('profile: ', req.body);
+
   client.query(`
     UPDATE users
-    SET name='${req.body.username}', birthdate='${req.body.username}', description='${req.body.username}', avatar='${req.body.username}'
-    WHERE username='${req.body.username}'
+    SET avatar='${req.body.avatar}',
+    name='${req.body.name}', birthdate='${req.body.birthdate}', description='${req.body.description}'
+    WHERE username='${req.body.username}';
     `)
     .then(res.send('profile edited'))
     .catch(err => console.error(err));
@@ -81,7 +92,7 @@ function loadUsersDB() {
       id SERIAL,
       username VARCHAR(12) UNIQUE NOT NULL,
       password VARCHAR(16) NOT NULL,
-      avatar VARCHAR(255),
+      avatar VARCHAR(255) DEFAULT 'http://via.placeholder.com/150x150',
       name VARCHAR(255),
       birthdate VARCHAR(40),
       description TEXT
