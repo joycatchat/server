@@ -8,9 +8,10 @@ export DATABASE_URL='postgres://localhost:5432/catchat'
 
 // Dependencies
 const express = require('express');
+const http = require('http').Server(app); //eslint-disable-line
 const cors = require('cors');
 const pg = require('pg');
-const fs = require('fs');
+const fs = require('fs'); //eslint-disable-line
 const bodyParser =  require('body-parser').urlencoded({extended: true});
 
 // App Setup
