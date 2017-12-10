@@ -151,8 +151,21 @@ function loadChatDB() {
     );
 
     INSERT INTO chat (title)
-    VALUES ('chat');
+    VALUES ('chat')
+    ON CONFLICT DO NOTHING;
+  `)
+    .then(loadMessagesDB)
+    .catch(console.log('load chat'));
+}
+
+function loadMessagesDB() {
+  console.log('messages DB');
+  client.query(`
+    CREATE TABLE IF NOT EXISTS messages (
+      title TEXT UNIQUE,
+      messages TEXT
+    );
   `)
     .then()
-    .catch(console.log('load chat'));
+    .catch(err => console.error(err));
 }
