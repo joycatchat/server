@@ -101,7 +101,7 @@ app.get('/loadchat', (req, res) => {
 });
 
 // Update Chat
-app.put('/updatechat', bodyParser, (req, res) =>{
+app.put('/updatechat', bodyParser, (req, res) => {
   console.log('chat updated');
 
   client.query(`
@@ -110,6 +110,30 @@ app.put('/updatechat', bodyParser, (req, res) =>{
     WHERE title='chat';
     `)
     .then(res.send('chat updated'))
+    .catch(err => console.error(err));
+});
+
+// Send Message
+app.post('/sendmessage', bodyParser, (req, res) => {
+  client.query(`
+    SELECT * FROM users WHERE username='${req.body.msgto}';`)
+    .then((data) => {
+      if (data.rows[0]) {
+        client.query(`
+        INSERT INTO messages (msgfrom, msgto, date, message)
+        VALUES ('${req.body.msgfrom}', '${req.body.msgto}', '${req.body.date}', '${req.body.message}');
+        `)
+          .then(() => {
+            res.send('message sent');
+            console.log('message sent: ', req.body.msgto)
+          })
+          .catch(err => console.error(err));
+      }
+      else {
+        res.send('no user');
+        console.log('no user: ', req.body.msgto);
+      }
+    })
     .catch(err => console.error(err));
 });
 
@@ -162,8 +186,10 @@ function loadMessagesDB() {
   console.log('messages DB');
   client.query(`
     CREATE TABLE IF NOT EXISTS messages (
-      title TEXT UNIQUE,
-      messages TEXT
+      msgfrom TEXT,
+      msgto TEXT,
+      date TEXT,
+      message TEXT
     );
   `)
     .then()
