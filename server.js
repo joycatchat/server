@@ -113,6 +113,24 @@ app.put('/updatechat', bodyParser, (req, res) => {
     .catch(err => console.error(err));
 });
 
+// Load Received Messages
+app.get('/loadreceivedmessages', (req, res) => {
+  console.log('load received messages: ', req.query.username);
+  client.query(`
+    SELECT * FROM messages WHERE msgto='${req.query.username}';`)
+    .then(result => res.send(result.rows))
+    .catch(err => console.error(err));
+});
+
+// Load Sent Messages
+app.get('/loadsentmessages', (req, res) => {
+  console.log('load sent messages: ', req.query.username);
+  client.query(`
+    SELECT * FROM messages WHERE msgfrom='${req.query.username}';`)
+    .then(result => res.send(result.rows))
+    .catch(err => console.error(err));
+});
+
 // Send Message
 app.post('/sendmessage', bodyParser, (req, res) => {
   client.query(`
@@ -120,8 +138,8 @@ app.post('/sendmessage', bodyParser, (req, res) => {
     .then((data) => {
       if (data.rows[0]) {
         client.query(`
-        INSERT INTO messages (msgfrom, msgto, date, message)
-        VALUES ('${req.body.msgfrom}', '${req.body.msgto}', '${req.body.date}', '${req.body.message}');
+        INSERT INTO messages (msgfrom, msgto, date, title, message)
+        VALUES ('${req.body.msgfrom}', '${req.body.msgto}', '${req.body.date}', '${req.body.title}', '${req.body.message}');
         `)
           .then(() => {
             res.send('message sent');
@@ -189,6 +207,7 @@ function loadMessagesDB() {
       msgfrom TEXT,
       msgto TEXT,
       date TEXT,
+      title TEXT,
       message TEXT
     );
   `)
