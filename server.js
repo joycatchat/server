@@ -7,14 +7,15 @@ export DATABASE_URL='postgres://localhost:5432/catchat'
 */
 
 // Dependencies
-const express = require('express');
+const app = require('express')();
+// const http = require('http').Server(app); //eslint-disable-line
+// const io = require('socket.io')(http); //eslint-disable-line
 const cors = require('cors');
 const pg = require('pg');
-const fs = require('fs');
+const fs = require('fs'); //eslint-disable-line
 const bodyParser =  require('body-parser').urlencoded({extended: true});
 
 // App Setup
-const app = express();
 const PORT = process.env.PORT;
 const CLIENT_URL = process.env.CLIENT_URL;
 
@@ -77,8 +78,89 @@ app.put('/updateprofile', bodyParser, (req, res) =>{
     .catch(err => console.error(err));
 });
 
+// Show Other Profiles
+app.get('/showotherprofile', (req, res) => {
+  console.log('load other profile: ', req.query);
+  client.query(`
+    SELECT * FROM users WHERE username='${req.query.username}';`)
+    .then(result => res.send(result.rows[0]))
+    .catch(err => console.error(err));
+});
+
+// Load Chat
+app.get('/loadchat', (req, res) => {
+  console.log('load chat');
+  client.query(`SELECT messages FROM chat;`)
+    .then(result => {
+      res.send(result.rows);
+    })
+    .catch(err => {
+      console.error(err);
+      res.send('usererror');
+    });
+});
+
+// Update Chat
+app.put('/updatechat', bodyParser, (req, res) => {
+  console.log('chat updated');
+
+  client.query(`
+    UPDATE chat
+    SET messages='${JSON.stringify(req.body.messages)}'
+    WHERE title='chat';
+    `)
+    .then(res.send('chat updated'))
+    .catch(err => console.error(err));
+});
+
+// Load Received Messages
+app.get('/loadreceivedmessages', (req, res) => {
+  console.log('load received messages: ', req.query.username);
+  client.query(`
+    SELECT * FROM messages WHERE msgto='${req.query.username}';`)
+    .then(result => res.send(result.rows))
+    .catch(err => console.error(err));
+});
+
+// Load Sent Messages
+app.get('/loadsentmessages', (req, res) => {
+  console.log('load sent messages: ', req.query.username);
+  client.query(`
+    SELECT * FROM messages WHERE msgfrom='${req.query.username}';`)
+    .then(result => res.send(result.rows))
+    .catch(err => console.error(err));
+});
+
+// Send Message
+app.post('/sendmessage', bodyParser, (req, res) => {
+  client.query(`
+    SELECT * FROM users WHERE username='${req.body.msgto}';`)
+    .then((data) => {
+      if (data.rows[0]) {
+        client.query(`
+        INSERT INTO messages (msgfrom, msgto, date, title, message)
+        VALUES ('${req.body.msgfrom}', '${req.body.msgto}', '${req.body.date}', '${req.body.title}', '${req.body.message}');
+        `)
+          .then(() => {
+            res.send('message sent');
+            console.log('message sent: ', req.body.msgto)
+          })
+          .catch(err => console.error(err));
+      }
+      else {
+        res.send('no user');
+        console.log('no user: ', req.body.msgto);
+      }
+    })
+    .catch(err => console.error(err));
+});
+
 // API Final Endpoints
 app.get('*', (req, res) => res.redirect(CLIENT_URL));
+
+// io.on('connection', function(socket){
+//   console.log('a user connected');
+// });
 
 app.listen(PORT, () => console.log(`Server started on port ${PORT}!`));
 
@@ -98,6 +180,37 @@ function loadUsersDB() {
       description TEXT
     );`
   )
-    .then()
+    .then(loadChatDB)
     .catch(err => console.error(err))
+}
+
+function loadChatDB() {
+  console.log('chat DB');
+  client.query(`
+    CREATE TABLE IF NOT EXISTS chat (
+      title TEXT UNIQUE,
+      messages TEXT
+    );
+
+    INSERT INTO chat (title)
+    VALUES ('chat')
+    ON CONFLICT DO NOTHING;
+  `)
+    .then(loadMessagesDB)
+    .catch(console.log('load chat'));
+}
+
+function loadMessagesDB() {
+  console.log('messages DB');
+  client.query(`
+    CREATE TABLE IF NOT EXISTS messages (
+      msgfrom TEXT,
+      msgto TEXT,
+      date TEXT,
+      title TEXT,
+      message TEXT
+    );
+  `)
+    .then()
+    .catch(err => console.error(err));
 }
